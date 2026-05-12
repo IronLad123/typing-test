@@ -183,19 +183,23 @@ function updateStats() {
 
 function finishTest() {
 
-  clearInterval(state.interval);
-
-  state.running = false;
-  state.finished = true;
-
-  updateStats();
-
-  resultEl.style.display = "block";
-
-  resultEl.textContent =
-    `${wpmEl.textContent} WPM · ${accEl.textContent}% Accuracy`;
-
-}
+    if (state.finished) return;
+  
+    state.finished = true;
+    state.running = false;
+  
+    clearInterval(state.interval);
+  
+    state.interval = null;
+  
+    updateStats();
+  
+    resultEl.style.display = "block";
+  
+    resultEl.textContent =
+      `${wpmEl.textContent} WPM · ${accEl.textContent}% Accuracy`;
+  
+  }
 
 function restart() {
 
