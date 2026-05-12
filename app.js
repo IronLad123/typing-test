@@ -1,223 +1,254 @@
-
-
-const WORD_BANK = [
-  "time","world","people","system","keyboard","typing","speed",
-  "random","focus","internet","signal","offline","design",
-  "performance","simple","future","computer","screen","practice",
-  "javascript","mobile","smooth","browser","creative","engine",
-  "coding","instant","restart","accuracy","challenge","dynamic",
-  "network","power","silent","window","monitor","science",
-  "generation","natural","modern","development","energy","typing"
-];
+const TEST_TIME = 30;
 
 const state = {
   words: [],
+  chars: [],
+
   charIndex: 0,
   results: [],
+
   running: false,
   finished: false,
+
   startTime: null,
-  timer: 30,
+  timer: TEST_TIME,
   interval: null
 };
 
 const wordsEl = document.getElementById("words");
 const caretEl = document.getElementById("caret");
+
 const wpmEl = document.getElementById("wpm");
 const accEl = document.getElementById("accuracy");
 const timeEl = document.getElementById("time");
+
 const resultEl = document.getElementById("result");
 
-function randomWords(count=40){
-  let arr = [];
+function getRandomSentence() {
 
-  for(let i=0;i<count;i++){
-    const random =
-      WORD_BANK[Math.floor(Math.random()*WORD_BANK.length)];
+  return SENTENCES[
+    Math.floor(Math.random() * SENTENCES.length)
+  ];
 
-    arr.push(random);
-  }
-
-  return arr;
 }
-function loadWords(){
 
-    const randomSentence =
-      SENTENCES[
-        Math.floor(Math.random() * SENTENCES.length)
-      ];
-  
-    state.words =
-      randomSentence.split(" ");
-  
-    renderWords();
-  
-  }
+function loadWords() {
 
-function renderWords(){
+  const sentence = getRandomSentence();
+
+  state.words = sentence.split(" ");
+
+  renderWords();
+
+}
+
+function renderWords() {
 
   wordsEl.innerHTML = "";
 
-  state.words.forEach(word=>{
+  const fragment =
+    document.createDocumentFragment();
 
-    const wordDiv = document.createElement("div");
-    wordDiv.className = "word";
+  state.words.forEach(word => {
 
-    word.split("").forEach(char=>{
+    const wordEl =
+      document.createElement("div");
 
-      const span = document.createElement("span");
+    wordEl.className = "word";
+
+    for (const char of word) {
+
+      const span =
+        document.createElement("span");
+
       span.className = "char";
-      span.innerText = char;
+      span.textContent = char;
 
-      wordDiv.appendChild(span);
+      wordEl.appendChild(span);
 
-    });
+    }
 
-    const space = document.createElement("span");
+    const space =
+      document.createElement("span");
+
     space.className = "char";
     space.innerHTML = "&nbsp;";
 
-    wordDiv.appendChild(space);
+    wordEl.appendChild(space);
 
-    wordsEl.appendChild(wordDiv);
+    fragment.appendChild(wordEl);
 
   });
 
+  wordsEl.appendChild(fragment);
+
+  state.chars =
+    [...document.querySelectorAll(".char")];
+
   activateChar(0);
 
-  setTimeout(moveCaret,50);
+  requestAnimationFrame(moveCaret);
+
 }
 
-function getAllChars(){
-  return document.querySelectorAll(".char");
-}
+function activateChar(index) {
 
-function activateChar(index){
+  const prev =
+    document.querySelector(".active");
 
-  document.querySelectorAll(".active")
-    .forEach(el=>el.classList.remove("active"));
-
-  const chars = getAllChars();
-
-  if(chars[index]){
-    chars[index].classList.add("active");
+  if (prev) {
+    prev.classList.remove("active");
   }
+
+  if (state.chars[index]) {
+    state.chars[index]
+      .classList.add("active");
+  }
+
 }
 
-function moveCaret(){
+function moveCaret() {
 
-  const active = document.querySelector(".active");
+  const active =
+    document.querySelector(".active");
 
-  if(!active) return;
+  if (!active) return;
 
-  const rect = active.getBoundingClientRect();
-  const parent = wordsEl.getBoundingClientRect();
+  const rect =
+    active.getBoundingClientRect();
+
+  const parent =
+    wordsEl.getBoundingClientRect();
 
   caretEl.style.left =
-    (rect.left - parent.left) + "px";
+    `${rect.left - parent.left}px`;
 
   caretEl.style.top =
-    (rect.top - parent.top) + "px";
+    `${rect.top - parent.top}px`;
+
 }
 
-function startTest(){
+function startTest() {
+
+  if (state.running) return;
 
   state.running = true;
+
   state.startTime = Date.now();
 
-  state.interval = setInterval(()=>{
+  state.interval = setInterval(() => {
 
     state.timer--;
 
-    timeEl.innerText = state.timer;
+    timeEl.textContent = state.timer;
 
     updateStats();
 
-    if(state.timer <= 0){
+    if (state.timer <= 0) {
       finishTest();
     }
 
-  },1000);
+  }, 1000);
 
 }
 
-function updateStats(){
+function updateStats() {
 
   const correct =
-    state.results.filter(r=>r===true).length;
+    state.results.filter(Boolean).length;
 
   const total =
     state.results.length;
 
+  const elapsed =
+    TEST_TIME - state.timer;
+
   const minutes =
-    (30 - state.timer)/60 || 1/60;
+    elapsed > 0
+      ? elapsed / 60
+      : 1 / 60;
 
   const wpm =
-    Math.round((correct/5)/minutes);
+    Math.round((correct / 5) / minutes);
 
   const accuracy =
     total
-      ? Math.round((correct/total)*100)
+      ? Math.round((correct / total) * 100)
       : 100;
 
-  wpmEl.innerText = wpm;
-  accEl.innerText = accuracy;
+  wpmEl.textContent = wpm;
+  accEl.textContent = accuracy;
+
 }
 
-function finishTest(){
+function finishTest() {
 
   clearInterval(state.interval);
 
-  state.finished = true;
   state.running = false;
+  state.finished = true;
+
+  updateStats();
 
   resultEl.style.display = "block";
 
-  resultEl.innerHTML =
-    `Finished — ${wpmEl.innerText} WPM · ${accEl.innerText}% Accuracy`;
+  resultEl.textContent =
+    `${wpmEl.textContent} WPM · ${accEl.textContent}% Accuracy`;
 
 }
 
-function restart(){
+function restart() {
 
   clearInterval(state.interval);
 
   state.charIndex = 0;
   state.results = [];
+
   state.running = false;
   state.finished = false;
-  state.startTime = null;
-  state.timer = 30;
 
-  timeEl.innerText = "30";
-  wpmEl.innerText = "0";
-  accEl.innerText = "100";
+  state.startTime = null;
+  state.timer = TEST_TIME;
+
+  timeEl.textContent = TEST_TIME;
+  wpmEl.textContent = "0";
+  accEl.textContent = "100";
 
   resultEl.style.display = "none";
 
   loadWords();
+
 }
 
-document.addEventListener("keydown",(e)=>{
+function handleBackspace() {
 
-  if(e.key === "Tab"){
-    e.preventDefault();
-    restart();
-    return;
-  }
+  if (state.charIndex <= 0) return;
 
-  if(state.finished) return;
+  state.charIndex--;
 
-  const chars = getAllChars();
-  const current = chars[state.charIndex];
+  state.results.pop();
 
-  if(!current) return;
+  const current =
+    state.chars[state.charIndex];
 
-  if(!state.running){
-    startTest();
-  }
+  current.classList.remove(
+    "correct",
+    "incorrect"
+  );
 
-  if(e.key.length !== 1 && e.key !== " "){
+  activateChar(state.charIndex);
+
+  moveCaret();
+
+}
+
+function handleTyping(key) {
+
+  const current =
+    state.chars[state.charIndex];
+
+  if (!current) {
+    finishTest();
     return;
   }
 
@@ -226,19 +257,21 @@ document.addEventListener("keydown",(e)=>{
       ? " "
       : current.innerText;
 
-  if(e.key === expected){
+  const correct =
+    key === expected;
 
-    current.classList.add("correct");
-    state.results.push(true);
+  current.classList.remove(
+    "correct",
+    "incorrect"
+  );
 
-  }else{
+  current.classList.add(
+    correct
+      ? "correct"
+      : "incorrect"
+  );
 
-    current.classList.add("incorrect");
-    state.results.push(false);
-
-  }
-
-  current.classList.remove("active");
+  state.results.push(correct);
 
   state.charIndex++;
 
@@ -246,7 +279,45 @@ document.addEventListener("keydown",(e)=>{
 
   moveCaret();
 
+}
+
+document.addEventListener("keydown", e => {
+
+  if (e.key === "Tab") {
+
+    e.preventDefault();
+
+    restart();
+
+    return;
+
+  }
+
+  if (state.finished) return;
+
+  if (e.key === "Backspace") {
+
+    e.preventDefault();
+
+    handleBackspace();
+
+    return;
+
+  }
+
+  if (
+    e.key.length !== 1 &&
+    e.key !== " "
+  ) {
+    return;
+  }
+
+  if (!state.running) {
+    startTest();
+  }
+
+  handleTyping(e.key);
+
 });
 
 loadWords();
-
