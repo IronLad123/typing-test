@@ -1,327 +1,312 @@
-const TEST_TIME = 30;
+<!DOCTYPE html>
+<html lang="en">
 
-const state = {
-  words: [],
-  chars: [],
+<head>
 
-  charIndex: 0,
-  results: [],
+  <meta charset="UTF-8" />
 
-  running: false,
-  finished: false,
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
-  startTime: null,
-  timer: TEST_TIME,
-  interval: null
-};
+  <title>Typing Test</title>
 
-const wordsEl = document.getElementById("words");
-const caretEl = document.getElementById("caret");
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
 
-const wpmEl = document.getElementById("wpm");
-const accEl = document.getElementById("accuracy");
-const timeEl = document.getElementById("time");
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
 
-const resultEl = document.getElementById("result");
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
 
-function getRandomSentence() {
+  <style>
 
-  return SENTENCES[
-    Math.floor(Math.random() * SENTENCES.length)
-  ];
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
 
-}
+    body{
 
-function loadWords() {
+      background:#111111;
 
-  const sentence = getRandomSentence();
+      color:#f5f5f5;
 
-  state.words = sentence.split(" ");
+      font-family:'JetBrains Mono', monospace;
 
-  renderWords();
+      min-height:100vh;
 
-}
+      display:flex;
+      justify-content:center;
+      align-items:center;
 
-function renderWords() {
+      overflow:hidden;
 
-  wordsEl.innerHTML = "";
-
-  const fragment =
-    document.createDocumentFragment();
-
-  state.words.forEach(word => {
-
-    const wordEl =
-      document.createElement("div");
-
-    wordEl.className = "word";
-
-    for (const char of word) {
-
-      const span =
-        document.createElement("span");
-
-      span.className = "char";
-      span.textContent = char;
-
-      wordEl.appendChild(span);
+      padding:20px;
 
     }
 
-    const space =
-      document.createElement("span");
+    .container{
 
-    space.className = "char";
-    space.innerHTML = "&nbsp;";
+      width:min(1000px,90%);
 
-    wordEl.appendChild(space);
+      position:relative;
 
-    fragment.appendChild(wordEl);
-
-  });
-
-  wordsEl.appendChild(fragment);
-
-  state.chars =
-    [...document.querySelectorAll(".char")];
-
-  activateChar(0);
-
-  requestAnimationFrame(moveCaret);
-
-}
-
-function activateChar(index) {
-
-  const prev =
-    document.querySelector(".active");
-
-  if (prev) {
-    prev.classList.remove("active");
-  }
-
-  if (state.chars[index]) {
-    state.chars[index]
-      .classList.add("active");
-  }
-
-}
-
-function moveCaret() {
-
-  const active =
-    document.querySelector(".active");
-
-  if (!active) return;
-
-  const rect =
-    active.getBoundingClientRect();
-
-  const parent =
-    wordsEl.getBoundingClientRect();
-
-  caretEl.style.left =
-    `${rect.left - parent.left}px`;
-
-  caretEl.style.top =
-    `${rect.top - parent.top}px`;
-
-}
-
-function startTest() {
-
-  if (state.running) return;
-
-  state.running = true;
-
-  state.startTime = Date.now();
-
-  state.interval = setInterval(() => {
-
-    state.timer--;
-
-    timeEl.textContent = state.timer;
-
-    updateStats();
-
-    if (state.timer <= 0) {
-      finishTest();
     }
 
-  }, 1000);
+    .container::before{
 
-}
+      content:"";
 
-function updateStats() {
+      position:absolute;
 
-  const correct =
-    state.results.filter(Boolean).length;
+      inset:-120px;
 
-  const total =
-    state.results.length;
+      background:
+        radial-gradient(
+          circle,
+          rgba(255,209,102,0.06),
+          transparent 70%
+        );
 
-  const elapsed =
-    TEST_TIME - state.timer;
+      z-index:-1;
 
-  const minutes =
-    elapsed > 0
-      ? elapsed / 60
-      : 1 / 60;
+    }
 
-  const wpm =
-    Math.round((correct / 5) / minutes);
+    .logo{
 
-  const accuracy =
-    total
-      ? Math.round((correct / total) * 100)
-      : 100;
+      color:#ffd166;
 
-  wpmEl.textContent = wpm;
-  accEl.textContent = accuracy;
+      font-size:14px;
 
-}
+      margin-bottom:40px;
 
-function finishTest() {
+      letter-spacing:2px;
 
-    if (state.finished) return;
-  
-    state.finished = true;
-    state.running = false;
-  
-    clearInterval(state.interval);
-  
-    state.interval = null;
-  
-    updateStats();
-  
-    resultEl.style.display = "block";
-  
-    resultEl.textContent =
-      `${wpmEl.textContent} WPM · ${accEl.textContent}% Accuracy`;
-  
-  }
+      text-transform:uppercase;
 
-function restart() {
+    }
 
-  clearInterval(state.interval);
+    .topbar{
 
-  state.charIndex = 0;
-  state.results = [];
+      display:flex;
 
-  state.running = false;
-  state.finished = false;
+      gap:28px;
 
-  state.startTime = null;
-  state.timer = TEST_TIME;
+      margin-bottom:40px;
 
-  timeEl.textContent = TEST_TIME;
-  wpmEl.textContent = "0";
-  accEl.textContent = "100";
+      color:#777;
 
-  resultEl.style.display = "none";
+      font-size:15px;
 
-  loadWords();
+    }
 
-}
+    .typing-box{
 
-function handleBackspace() {
+      position:relative;
 
-  if (state.charIndex <= 0) return;
+      font-size:34px;
 
-  state.charIndex--;
+      line-height:1.8;
 
-  state.results.pop();
+      color:#555;
 
-  const current =
-    state.chars[state.charIndex];
+      user-select:none;
 
-  current.classList.remove(
-    "correct",
-    "incorrect"
-  );
+      max-height:240px;
 
-  activateChar(state.charIndex);
+      overflow:hidden;
 
-  moveCaret();
+      word-wrap:break-word;
 
-}
+    }
 
-function handleTyping(key) {
+    .word{
 
-  const current =
-    state.chars[state.charIndex];
+      display:inline-block;
 
-  if (!current) {
-    finishTest();
-    return;
-  }
+      margin-right:14px;
 
-  const expected =
-    current.innerText === "\u00A0"
-      ? " "
-      : current.innerText;
+    }
 
-  const correct =
-    key === expected;
+    .char{
 
-  current.classList.remove(
-    "correct",
-    "incorrect"
-  );
+      transition:0.08s;
 
-  current.classList.add(
-    correct
-      ? "correct"
-      : "incorrect"
-  );
+    }
 
-  state.results.push(correct);
+    .char.correct{
+      color:#f5f5f5;
+    }
 
-  state.charIndex++;
+    .char.incorrect{
+      color:#ff6b6b;
+    }
 
-  activateChar(state.charIndex);
+    .char.active{
+      color:#ffd166;
+    }
 
-  moveCaret();
+    #caret{
 
-}
+      position:absolute;
 
-document.addEventListener("keydown", e => {
+      width:2px;
 
-  if (e.key === "Tab") {
+      height:42px;
 
-    e.preventDefault();
+      background:#ffd166;
 
-    restart();
+      border-radius:4px;
 
-    return;
+      transition:
+        left 0.05s linear,
+        top 0.05s linear;
 
-  }
+      animation:blink 1s infinite;
 
-  if (state.finished) return;
+    }
 
-  if (e.key === "Backspace") {
+    @keyframes blink{
 
-    e.preventDefault();
+      50%{
+        opacity:0;
+      }
 
-    handleBackspace();
+    }
 
-    return;
+    .result{
 
-  }
+      margin-top:36px;
 
-  if (
-    e.key.length !== 1 &&
-    e.key !== " "
-  ) {
-    return;
-  }
+      color:#ffd166;
 
-  if (!state.running) {
-    startTest();
-  }
+      font-size:24px;
 
-  handleTyping(e.key);
+      font-weight:600;
 
-});
+      display:none;
 
-loadWords();
+      animation:fadeIn 0.3s ease;
+
+    }
+
+    @keyframes fadeIn{
+
+      from{
+        opacity:0;
+        transform:translateY(10px);
+      }
+
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+
+    }
+
+    .footer{
+
+      margin-top:42px;
+
+      color:#666;
+
+      font-size:12px;
+
+      letter-spacing:2px;
+
+      text-transform:uppercase;
+
+    }
+
+    @media(max-width:768px){
+
+      .typing-box{
+
+        font-size:24px;
+
+        line-height:1.9;
+
+      }
+
+      #caret{
+        height:30px;
+      }
+
+      .topbar{
+
+        gap:18px;
+
+        font-size:13px;
+
+      }
+
+      .result{
+        font-size:20px;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="logo">
+      Typing Test
+    </div>
+
+    <div class="topbar">
+
+      <div>
+        <span id="wpm">0</span> wpm
+      </div>
+
+      <div>
+        <span id="accuracy">100</span>%
+      </div>
+
+      <div>
+        <span id="time">30</span>s
+      </div>
+
+    </div>
+
+    <div
+      class="typing-box"
+      id="words"
+    ></div>
+
+    <div id="caret"></div>
+
+    <div
+      class="result"
+      id="result"
+    ></div>
+
+    <div class="footer">
+      press tab to restart
+    </div>
+
+  </div>
+
+  <script src="sentences.js"></script>
+
+  <script src="app.js"></script>
+
+</body>
+
+</html>
