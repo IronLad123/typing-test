@@ -40,29 +40,19 @@ function randomWords(count=40){
 
   return arr;
 }
+function loadWords(){
 
-async function loadWords(){
-
-  if(navigator.onLine){
-
-    try{
-
-      // Placeholder AI sentence simulation
-      const aiSentence =
-        "the internet provides fast typing practice for focused users who enjoy smooth minimal experiences";
-
-      state.words = aiSentence.split(" ");
-
-    }catch{
-      state.words = randomWords();
-    }
-
-  }else{
-    state.words = randomWords();
+    const randomSentence =
+      SENTENCES[
+        Math.floor(Math.random() * SENTENCES.length)
+      ];
+  
+    state.words =
+      randomSentence.split(" ");
+  
+    renderWords();
+  
   }
-
-  renderWords();
-}
 
 function renderWords(){
 
